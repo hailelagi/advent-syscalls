@@ -101,12 +101,22 @@ int main(int argc, char *argv[]) {
     int flags = 0;
     void *arg = NULL;
     if (!strcmp(argv[1], "fork")) {
-        // TODO: Implement multiple clone modes.
+        flags = SIGCHLD;
+    } else if (!strcmp(argv[1], "chimera")) {
+        flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD;
+    } else if (!strcmp(argv[1], "thread")) {
+        flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD | CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID;
+    } else if (!strcmp(argv[1], "user")) {
+        flags = CLONE_NEWUSER | SIGCHLD;
     } else {
         printf("Invalid clone() mode: %s\n", argv[1]);
         return -1;
     }
-    // TODO: Call clone here!
+
+    if (clone(child_entry, stack + sizeof(stack), flags, arg) == -1) {
+        perror("clone");
+        return -1;
+    }
 
     syscall_write("\n!!!!! Press C-c to terminate. !!!!!", 0);
     while(counter < 4) {
